@@ -579,6 +579,9 @@ fn find_opaque_ty_constraints(tcx: TyCtxt<'_>, def_id: LocalDefId) -> Ty<'_> {
                 debug!("no constraints in typeck results");
                 return;
             }
+            if matches!(self.tcx.type_of(def_id).kind(), ty::Error(..)) {
+                self.tcx.sess.abort_if_errors();
+            }
             // Use borrowck to get the type with unerased regions.
             let concrete_opaque_types = &self.tcx.mir_borrowck(def_id).concrete_opaque_types;
             debug!(?concrete_opaque_types);
