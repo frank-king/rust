@@ -560,6 +560,7 @@ pub fn check_crate(krate: &ast::Crate, sess: &Session, features: &Features) {
     gate_all!(pin_ergonomics, "pinned reference syntax is experimental");
     gate_all!(unsafe_fields, "`unsafe` fields are experimental");
     gate_all!(unsafe_binders, "unsafe binder types are experimental");
+    gate_all!(cfg_attribute_in_where, "`#[cfg]` attribute in `where` clause is unstable");
 
     if !visitor.features.never_patterns() {
         if let Some(spans) = spans.get(&sym::never_patterns) {
