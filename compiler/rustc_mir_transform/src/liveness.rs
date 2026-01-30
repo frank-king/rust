@@ -1441,7 +1441,8 @@ impl DefUse {
                 MutatingUseContext::RawBorrow
                 | MutatingUseContext::Borrow
                 | MutatingUseContext::Drop
-                | MutatingUseContext::Retag,
+                | MutatingUseContext::Retag
+                | MutatingUseContext::PinnedBorrow,
             )
             | PlaceContext::NonMutatingUse(
                 NonMutatingUseContext::RawBorrow
@@ -1450,7 +1451,8 @@ impl DefUse {
                 | NonMutatingUseContext::Move
                 | NonMutatingUseContext::FakeBorrow
                 | NonMutatingUseContext::SharedBorrow
-                | NonMutatingUseContext::PlaceMention,
+                | NonMutatingUseContext::PlaceMention
+                | NonMutatingUseContext::PinnedBorrow,
             ) => Some(DefUse::Use),
 
             PlaceContext::NonUse(
