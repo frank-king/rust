@@ -43,8 +43,8 @@ fn sizedness_constraint_for_ty<'tcx>(
         ty::Str | ty::Slice(..) | ty::Dynamic(_, _) => match sizedness {
             // Never `Sized`
             SizedTraitKind::Sized => Some(ty),
-            // Always `MetaSized`
-            SizedTraitKind::MetaSized => None,
+            // Always `ValueSized` / `MetaSized`
+            SizedTraitKind::ValueSized | SizedTraitKind::MetaSized => None,
         },
 
         // Maybe `Sized` or `MetaSized`

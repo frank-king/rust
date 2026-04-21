@@ -46,15 +46,20 @@ struct CollectedSizednessBounds {
     sized: CollectedBound,
     // Collected `MetaSized` bounds
     meta_sized: CollectedBound,
+    // Collected `ValueSized` bounds
+    value_sized: CollectedBound,
     // Collected `PointeeSized` bounds
     pointee_sized: CollectedBound,
 }
 
 impl CollectedSizednessBounds {
     /// Returns `true` if any of `Trait`, `?Trait` or `!Trait` were encountered for `Sized`,
-    /// `MetaSized` or `PointeeSized`.
+    /// `MetaSized`, `ValueSized` or `PointeeSized`.
     fn any(&self) -> bool {
-        self.sized.any() || self.meta_sized.any() || self.pointee_sized.any()
+        self.sized.any()
+            || self.meta_sized.any()
+            || self.value_sized.any()
+            || self.pointee_sized.any()
     }
 }
 
@@ -130,10 +135,13 @@ fn collect_sizedness_bounds<'tcx>(
     let meta_sized_did = tcx.require_lang_item(hir::LangItem::MetaSized, span);
     let meta_sized = collect_bounds(hir_bounds, context, meta_sized_did);
 
+    let value_sized_did = tcx.require_lang_item(hir::LangItem::ValueSized, span);
+    let value_sized = collect_bounds(hir_bounds, context, value_sized_did);
+
     let pointee_sized_did = tcx.require_lang_item(hir::LangItem::PointeeSized, span);
     let pointee_sized = collect_bounds(hir_bounds, context, pointee_sized_did);
 
-    CollectedSizednessBounds { sized, meta_sized, pointee_sized }
+    CollectedSizednessBounds { sized, meta_sized, value_sized, pointee_sized }
 }
 
 /// Add a trait bound for `did`.
@@ -175,14 +183,15 @@ impl<'tcx> dyn HirTyLowerer<'tcx> + '_ {
         }
 
         let meta_sized_did = tcx.require_lang_item(hir::LangItem::MetaSized, span);
+        let value_sized_did = tcx.require_lang_item(hir::LangItem::ValueSized, span);
         let pointee_sized_did = tcx.require_lang_item(hir::LangItem::PointeeSized, span);
 
         // If adding sizedness bounds to a trait, then there are some relevant early exits
         match context {
             ImpliedBoundsContext::TraitDef(trait_did) => {
                 let trait_did = trait_did.to_def_id();
-                // Never add a default supertrait to `PointeeSized`.
-                if trait_did == pointee_sized_did {
+                // Never add a default supertrait to `ValueSized` or `PointeeSized`.
+                if trait_did == value_sized_did || trait_did == pointee_sized_did {
                     return;
                 }
                 // Don't add default sizedness supertraits to auto traits because it isn't possible to
@@ -211,6 +220,7 @@ impl<'tcx> dyn HirTyLowerer<'tcx> + '_ {
         if (collected.sized.maybe || collected.sized.negative)
             && !collected.sized.positive
             && !collected.meta_sized.any()
+            && !collected.value_sized.any()
             && !collected.pointee_sized.any()
         {
             // `?Sized` is equivalent to `MetaSized` (but only add the bound if there aren't any

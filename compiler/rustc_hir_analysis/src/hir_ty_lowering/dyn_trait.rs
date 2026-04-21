@@ -93,6 +93,7 @@ impl<'tcx> dyn HirTyLowerer<'tcx> + '_ {
         // FIXME(sized-hierarchy): https://github.com/rust-lang/rust/pull/142712#issuecomment-3013231794
         debug!(?user_written_bounds, ?elaborated_trait_bounds);
         let meta_sized_did = tcx.require_lang_item(LangItem::MetaSized, span);
+        let value_sized_did = tcx.require_lang_item(LangItem::ValueSized, span);
         // Don't strip out `MetaSized` when the user wrote it explicitly, only when it was
         // elaborated
         if user_written_bounds
@@ -103,9 +104,23 @@ impl<'tcx> dyn HirTyLowerer<'tcx> + '_ {
         }
         debug!(?user_written_bounds, ?elaborated_trait_bounds);
 
-        let (regular_traits, mut auto_traits): (Vec<_>, Vec<_>) = elaborated_trait_bounds
+        let (mut regular_traits, mut auto_traits): (Vec<_>, Vec<_>) = elaborated_trait_bounds
             .into_iter()
             .partition(|(trait_ref, _)| !tcx.trait_is_auto(trait_ref.def_id()));
+
+        // If the trait object has a non-sizedness principal trait, treat any user-written
+        // sizedness trait (such as `ValueSized`) as a sizedness bound rather than an
+        // additional principal. This allows `dyn Trait + ValueSized` to relax the implicit
+        // `MetaSized` bound without triggering the "multiple principals" error.
+        if regular_traits.len() > 1
+            && regular_traits.iter().any(|(trait_ref, _)| {
+                trait_ref.def_id() != meta_sized_did && trait_ref.def_id() != value_sized_did
+            })
+        {
+            regular_traits.retain(|(trait_ref, _)| {
+                trait_ref.def_id() != meta_sized_did && trait_ref.def_id() != value_sized_did
+            });
+        }
 
         // We don't support empty trait objects.
         if regular_traits.is_empty() && auto_traits.is_empty() {

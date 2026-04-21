@@ -154,6 +154,7 @@ language_item_table! {
 //  Variant name,            Name,                     Getter method name,         Target                  Generic requirements;
     Sized,                   sym::sized,               sized_trait,                Target::Trait,          GenericRequirement::Exact(0);
     MetaSized,               sym::meta_sized,          meta_sized_trait,           Target::Trait,          GenericRequirement::Exact(0);
+    ValueSized,              sym::value_sized,         value_sized_trait,          Target::Trait,          GenericRequirement::Exact(0);
     PointeeSized,            sym::pointee_sized,       pointee_sized_trait,        Target::Trait,          GenericRequirement::Exact(0);
     Unsize,                  sym::unsize,              unsize_trait,               Target::Trait,          GenericRequirement::Minimum(1);
     AlignOf,                 sym::mem_align_const,     align_const,                Target::AssocConst,     GenericRequirement::Exact(0);

@@ -461,13 +461,15 @@ pub enum AdtDestructorKind {
     Const,
 }
 
-/// Which sizedness trait - `Sized`, `MetaSized`? `PointeeSized` is omitted as it is removed during
+/// Which sizedness trait - `Sized`, `ValueSized`, `MetaSized`? `PointeeSized` is omitted as it is removed during
 /// lowering.
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[cfg_attr(feature = "nightly", derive(HashStable_NoContext))]
 pub enum SizedTraitKind {
     /// `Sized` trait
     Sized,
+    /// `ValueSized` trait
+    ValueSized,
     /// `MetaSized` trait
     MetaSized,
 }
@@ -477,6 +479,7 @@ impl SizedTraitKind {
     pub fn require_lang_item<I: Interner>(self, cx: I) -> I::TraitId {
         cx.require_trait_lang_item(match self {
             SizedTraitKind::Sized => SolverTraitLangItem::Sized,
+            SizedTraitKind::ValueSized => SolverTraitLangItem::ValueSized,
             SizedTraitKind::MetaSized => SolverTraitLangItem::MetaSized,
         })
     }

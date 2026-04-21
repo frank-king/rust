@@ -55,5 +55,6 @@ pub enum SolverTraitLangItem {
     Tuple,
     Unpin,
     Unsize,
+    ValueSized,
     // tidy-alphabetical-end
 }

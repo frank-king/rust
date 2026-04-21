@@ -140,12 +140,18 @@ where
         ) -> bool {
             clause_def_id == goal_def_id
             // PERF(sized-hierarchy): Sizedness supertraits aren't elaborated to improve perf, so
-            // check for a `MetaSized` supertrait being matched against a `Sized` assumption.
+            // check for a `MetaSized`/`ValueSized` supertrait being matched against a `Sized`
+            // assumption, or a `ValueSized` supertrait being matched against a `MetaSized`
+            // assumption.
             //
             // `PointeeSized` bounds are syntactic sugar for a lack of bounds so don't need this.
                 || (polarity == PredicatePolarity::Positive
                     && cx.is_trait_lang_item(clause_def_id, SolverTraitLangItem::Sized)
-                    && cx.is_trait_lang_item(goal_def_id, SolverTraitLangItem::MetaSized))
+                    && (cx.is_trait_lang_item(goal_def_id, SolverTraitLangItem::MetaSized)
+                        || cx.is_trait_lang_item(goal_def_id, SolverTraitLangItem::ValueSized)))
+                || (polarity == PredicatePolarity::Positive
+                    && cx.is_trait_lang_item(clause_def_id, SolverTraitLangItem::MetaSized)
+                    && cx.is_trait_lang_item(goal_def_id, SolverTraitLangItem::ValueSized))
         }
 
         if let Some(trait_clause) = assumption.as_trait_clause()
@@ -176,16 +182,24 @@ where
         let trait_clause = assumption.as_trait_clause().unwrap();
 
         // PERF(sized-hierarchy): Sizedness supertraits aren't elaborated to improve perf, so
-        // check for a `Sized` subtrait when looking for `MetaSized`. `PointeeSized` bounds
-        // are syntactic sugar for a lack of bounds so don't need this.
+        // check for a stronger sizedness subtrait when looking for a weaker one. `PointeeSized`
+        // bounds are syntactic sugar for a lack of bounds so don't need this.
         // We don't need to check polarity, `fast_reject_assumption` already rejected non-`Positive`
-        // polarity `Sized` assumptions as matching non-`Positive` `MetaSized` goals.
-        if ecx.cx().is_trait_lang_item(goal.predicate.def_id(), SolverTraitLangItem::MetaSized)
-            && ecx.cx().is_trait_lang_item(trait_clause.def_id(), SolverTraitLangItem::Sized)
+        // polarity stronger-sizedness assumptions as matching non-`Positive` weaker-sizedness goals.
+        let goal_is_meta_sized =
+            ecx.cx().is_trait_lang_item(goal.predicate.def_id(), SolverTraitLangItem::MetaSized);
+        let goal_is_value_sized =
+            ecx.cx().is_trait_lang_item(goal.predicate.def_id(), SolverTraitLangItem::ValueSized);
+        let clause_is_sized =
+            ecx.cx().is_trait_lang_item(trait_clause.def_id(), SolverTraitLangItem::Sized);
+        let clause_is_meta_sized =
+            ecx.cx().is_trait_lang_item(trait_clause.def_id(), SolverTraitLangItem::MetaSized);
+        if (goal_is_meta_sized && clause_is_sized)
+            || (goal_is_value_sized && (clause_is_sized || clause_is_meta_sized))
         {
-            let meta_sized_clause =
+            let weaker_clause =
                 trait_predicate_with_def_id(ecx.cx(), trait_clause, goal.predicate.def_id());
-            return Self::match_assumption(ecx, goal, meta_sized_clause, then);
+            return Self::match_assumption(ecx, goal, weaker_clause, then);
         }
 
         let assumption_trait_pred = ecx.instantiate_binder_with_infer(trait_clause);

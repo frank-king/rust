@@ -1947,11 +1947,13 @@ impl<'tcx> Ty<'tcx> {
 
             ty::Str | ty::Slice(_) | ty::Dynamic(_, _) => match sizedness {
                 SizedTraitKind::Sized => false,
-                SizedTraitKind::MetaSized => true,
+                SizedTraitKind::ValueSized | SizedTraitKind::MetaSized => true,
             },
 
             ty::Foreign(..) => match sizedness {
-                SizedTraitKind::Sized | SizedTraitKind::MetaSized => false,
+                SizedTraitKind::Sized | SizedTraitKind::ValueSized | SizedTraitKind::MetaSized => {
+                    false
+                }
             },
 
             ty::Tuple(tys) => tys.last().is_none_or(|ty| ty.has_trivial_sizedness(tcx, sizedness)),

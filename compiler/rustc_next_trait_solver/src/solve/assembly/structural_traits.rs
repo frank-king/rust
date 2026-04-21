@@ -140,10 +140,10 @@ where
         | ty::Never
         | ty::Error(_) => Ok(ty::Binder::dummy(vec![])),
 
-        // impl {Meta,}Sized for str, [T], dyn Trait
+        // impl {Meta,Value,}Sized for str, [T], dyn Trait
         ty::Str | ty::Slice(_) | ty::Dynamic(..) => match sizedness {
             SizedTraitKind::Sized => Err(NoSolution),
-            SizedTraitKind::MetaSized => Ok(ty::Binder::dummy(vec![])),
+            SizedTraitKind::ValueSized | SizedTraitKind::MetaSized => Ok(ty::Binder::dummy(vec![])),
         },
 
         // impl {} for extern type

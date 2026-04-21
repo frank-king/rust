@@ -172,7 +172,24 @@ pub trait Sized: MetaSized {
 // `MetaSized` being coinductive, despite having supertraits, is okay for the same reasons as
 // `Sized` above.
 #[rustc_coinductive]
-pub trait MetaSized: PointeeSized {
+pub trait MetaSized: ValueSized {
+    // Empty
+}
+
+/// Types with a size that can be determined from its value.
+#[unstable(feature = "value_sized", issue = "none")]
+#[lang = "value_sized"]
+#[diagnostic::on_unimplemented(
+    message = "the size for values of type `{Self}` cannot be known at runtime",
+    label = "doesn't have a known size at runtime"
+)]
+#[fundamental]
+#[rustc_specialization_trait]
+#[rustc_deny_explicit_impl]
+// `ValueSized` being coinductive, despite having supertraits, is okay for the same reasons as
+// `MetaSized` above.
+#[rustc_coinductive]
+pub trait ValueSized: PointeeSized {
     // Empty
 }
 

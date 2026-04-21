@@ -2171,7 +2171,7 @@ impl<'tcx> SelectionContext<'_, 'tcx> {
 
             ty::Str | ty::Slice(_) | ty::Dynamic(..) => match sizedness {
                 SizedTraitKind::Sized => unreachable!("tried to assemble `Sized` for unsized type"),
-                SizedTraitKind::MetaSized => ty::Binder::dummy(vec![]),
+                SizedTraitKind::ValueSized | SizedTraitKind::MetaSized => ty::Binder::dummy(vec![]),
             },
 
             ty::Foreign(..) => unreachable!("tried to assemble `Sized` for unsized type"),

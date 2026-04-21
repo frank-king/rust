@@ -807,5 +807,6 @@ bidirectional_lang_item_map! {
     Tuple,
     Unpin,
     Unsize,
+    ValueSized,
 // tidy-alphabetical-end
 }

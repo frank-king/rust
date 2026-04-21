@@ -238,6 +238,9 @@ impl<'cx, 'tcx> SelectionContext<'cx, 'tcx> {
         );
         let types = match tcx.as_lang_item(trait_def) {
             Some(LangItem::Sized) => self.sizedness_conditions(self_ty, SizedTraitKind::Sized),
+            Some(LangItem::ValueSized) => {
+                self.sizedness_conditions(self_ty, SizedTraitKind::ValueSized)
+            }
             Some(LangItem::MetaSized) => {
                 self.sizedness_conditions(self_ty, SizedTraitKind::MetaSized)
             }

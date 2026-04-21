@@ -1,0 +1,21 @@
+error[E0658]: use of unstable library feature `value_sized`
+  --> $DIR/feature-gate-value_sized.rs:1:5
+   |
+LL | use std::marker::ValueSized;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: add `#![feature(value_sized)]` to the crate attributes to enable
+   = note: this compiler was built on YYYY-MM-DD; consider upgrading it if it is out of date
+
+error[E0658]: use of unstable library feature `value_sized`
+  --> $DIR/feature-gate-value_sized.rs:4:17
+   |
+LL |     let _: &dyn ValueSized = &();
+   |                 ^^^^^^^^^^
+   |
+   = help: add `#![feature(value_sized)]` to the crate attributes to enable
+   = note: this compiler was built on YYYY-MM-DD; consider upgrading it if it is out of date
+
+error: aborting due to 2 previous errors
+
+For more information about this error, try `rustc --explain E0658`.

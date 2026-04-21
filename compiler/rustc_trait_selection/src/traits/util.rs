@@ -379,6 +379,7 @@ pub fn sizedness_fast_path<'tcx>(
     {
         let sizedness = match tcx.as_lang_item(trait_pred.def_id()) {
             Some(LangItem::Sized) => SizedTraitKind::Sized,
+            Some(LangItem::ValueSized) => SizedTraitKind::ValueSized,
             Some(LangItem::MetaSized) => SizedTraitKind::MetaSized,
             _ => return false,
         };
@@ -395,6 +396,9 @@ pub fn sizedness_fast_path<'tcx>(
                     && clause_pred.self_ty() == trait_pred.self_ty()
                     && (clause_pred.def_id() == trait_pred.def_id()
                         || (sizedness == SizedTraitKind::MetaSized
+                            && (tcx.is_lang_item(clause_pred.def_id(), LangItem::Sized)
+                                || tcx.is_lang_item(clause_pred.def_id(), LangItem::ValueSized)))
+                        || (sizedness == SizedTraitKind::ValueSized
                             && tcx.is_lang_item(clause_pred.def_id(), LangItem::Sized)))
                 {
                     return true;
@@ -414,9 +418,18 @@ pub(crate) fn lazily_elaborate_sizedness_candidate<'tcx>(
     obligation: &PolyTraitObligation<'tcx>,
     candidate: PolyTraitPredicate<'tcx>,
 ) -> PolyTraitPredicate<'tcx> {
-    if !infcx.tcx.is_lang_item(obligation.predicate.def_id(), LangItem::MetaSized)
-        || !infcx.tcx.is_lang_item(candidate.def_id(), LangItem::Sized)
-    {
+    let tcx = infcx.tcx;
+    let obligation_is_meta_sized =
+        tcx.is_lang_item(obligation.predicate.def_id(), LangItem::MetaSized);
+    let obligation_is_value_sized =
+        tcx.is_lang_item(obligation.predicate.def_id(), LangItem::ValueSized);
+    let candidate_is_sized = tcx.is_lang_item(candidate.def_id(), LangItem::Sized);
+    let candidate_is_meta_sized = tcx.is_lang_item(candidate.def_id(), LangItem::MetaSized);
+    // A `Sized` candidate can satisfy a `MetaSized` or `ValueSized` obligation; a `MetaSized`
+    // candidate can satisfy a `ValueSized` obligation.
+    let is_applicable = (obligation_is_meta_sized && candidate_is_sized)
+        || (obligation_is_value_sized && (candidate_is_sized || candidate_is_meta_sized));
+    if !is_applicable {
         return candidate;
     }
 

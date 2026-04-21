@@ -2217,6 +2217,7 @@ symbols! {
         val,
         validity,
         value,
+        value_sized,
         values,
         var,
         variadic,

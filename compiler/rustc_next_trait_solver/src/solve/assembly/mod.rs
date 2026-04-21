@@ -571,6 +571,9 @@ where
                 Some(SolverTraitLangItem::Sized) => {
                     G::consider_builtin_sizedness_candidates(self, goal, SizedTraitKind::Sized)
                 }
+                Some(SolverTraitLangItem::ValueSized) => {
+                    G::consider_builtin_sizedness_candidates(self, goal, SizedTraitKind::ValueSized)
+                }
                 Some(SolverTraitLangItem::MetaSized) => {
                     G::consider_builtin_sizedness_candidates(self, goal, SizedTraitKind::MetaSized)
                 }
