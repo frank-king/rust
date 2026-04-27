@@ -261,12 +261,17 @@ impl<'a, 'tcx> LoanInvalidationsGenerator<'a, 'tcx> {
                     BorrowKind::Shared | BorrowKind::Fake(FakeBorrowKind::Deep) => {
                         (Deep, Read(ReadKind::Borrow(bk)))
                     }
-                    BorrowKind::Pinned(Mutability::Not) => {
-                        (Deep, Read(ReadKind::Borrow(BorrowKind::Pinned(Mutability::Not))))
-                    }
-                    BorrowKind::Pinned(Mutability::Mut) => {
-                        (Deep, Write(WriteKind::MutableBorrow(BorrowKind::Pinned(Mutability::Mut))))
-                    }
+                    BorrowKind::Pinned(Mutability::Not, pin_kind) => (
+                        Deep,
+                        Read(ReadKind::Borrow(BorrowKind::Pinned(Mutability::Not, pin_kind))),
+                    ),
+                    BorrowKind::Pinned(Mutability::Mut, pin_kind) => (
+                        Deep,
+                        Write(WriteKind::MutableBorrow(BorrowKind::Pinned(
+                            Mutability::Mut,
+                            pin_kind,
+                        ))),
+                    ),
                     BorrowKind::Mut { .. } => {
                         let wk = WriteKind::MutableBorrow(bk);
                         if bk.is_two_phase_borrow() {
@@ -382,7 +387,7 @@ impl<'a, 'tcx> LoanInvalidationsGenerator<'a, 'tcx> {
                         Read(_),
                         BorrowKind::Fake(_)
                         | BorrowKind::Shared
-                        | BorrowKind::Pinned(Mutability::Not),
+                        | BorrowKind::Pinned(Mutability::Not, _),
                     )
                     | (
                         Read(ReadKind::Borrow(BorrowKind::Fake(FakeBorrowKind::Shallow))),
@@ -391,7 +396,7 @@ impl<'a, 'tcx> LoanInvalidationsGenerator<'a, 'tcx> {
                         // Reads don't invalidate shared or shallow borrows
                     }
 
-                    (Read(_), BorrowKind::Mut { .. } | BorrowKind::Pinned(Mutability::Mut)) => {
+                    (Read(_), BorrowKind::Mut { .. } | BorrowKind::Pinned(Mutability::Mut, _)) => {
                         // Reading from mere reservations of mutable-borrows is OK.
                         if !is_active(this.dominators, borrow, location) {
                             // If the borrow isn't active yet, reads don't invalidate it
@@ -432,9 +437,10 @@ impl<'a, 'tcx> LoanInvalidationsGenerator<'a, 'tcx> {
 
             // only mutable borrows should be 2-phase
             assert!(match borrow.kind {
-                BorrowKind::Shared | BorrowKind::Fake(_) | BorrowKind::Pinned(Mutability::Not) =>
-                    false,
-                BorrowKind::Mut { .. } | BorrowKind::Pinned(Mutability::Mut) => true,
+                BorrowKind::Shared
+                | BorrowKind::Fake(_)
+                | BorrowKind::Pinned(Mutability::Not, _) => false,
+                BorrowKind::Mut { .. } | BorrowKind::Pinned(Mutability::Mut, _) => true,
             });
 
             self.access_place(
