@@ -582,7 +582,11 @@ impl<'tcx> Visitor<'tcx> for Checker<'_, 'tcx> {
                 }
             }
 
-            Rvalue::Ref(_, BorrowKind::Mut { .. } | BorrowKind::Pinned(Mutability::Mut), place)
+            Rvalue::Ref(
+                _,
+                BorrowKind::Mut { .. } | BorrowKind::Pinned(Mutability::Mut, _),
+                place,
+            )
             | Rvalue::RawPtr(RawPtrKind::Mut, place) => {
                 // Inside mutable statics, we allow arbitrary mutable references.
                 // We've allowed `static mut FOO = &mut [elements];` for a long time (the exact
@@ -598,7 +602,7 @@ impl<'tcx> Visitor<'tcx> for Checker<'_, 'tcx> {
 
             Rvalue::Ref(
                 _,
-                BorrowKind::Shared | BorrowKind::Fake(_) | BorrowKind::Pinned(Mutability::Not),
+                BorrowKind::Shared | BorrowKind::Fake(_) | BorrowKind::Pinned(Mutability::Not, _),
                 place,
             )
             | Rvalue::RawPtr(RawPtrKind::Const, place) => {
