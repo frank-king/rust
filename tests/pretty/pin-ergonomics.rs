@@ -5,6 +5,7 @@
 
 use std::pin::Pin;
 
+#[pin_v2]
 struct Foo;
 
 impl Foo {
