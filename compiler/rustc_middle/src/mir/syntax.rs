@@ -184,7 +184,7 @@ pub enum BorrowKind {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, TyEncodable, TyDecodable)]
-#[derive(Hash, HashStable)]
+#[derive(Hash, StableHash)]
 pub enum PinBorrowKind {
     /// A user-written `&pin` borrow.
     ///
